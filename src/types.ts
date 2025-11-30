@@ -1,28 +1,23 @@
-import { z } from 'zod';
+export type ServerCore = 'paper' | 'purpur' | 'magma' | 'mohist' | 'velocity' | 'folia' | 'waterfall' | 'vanilla' | 'fabric' | 'forge' | 'arclight';
 
-export const ServerCoreSchema = z.enum(['paper', 'purpur', 'magma', 'mohist', 'velocity', 'folia', 'waterfall', 'vanilla', 'fabric', 'forge']);
-export type ServerCore = z.infer<typeof ServerCoreSchema>;
+export interface DownloadArtifact {
+    name: string;
+    url: string;
+    hash?: string;
+    hashType?: 'sha256' | 'md5' | 'sha1';
+    size?: number;
+    downloadType: 'binary' | 'path' | 'installer';
+}
 
-export const DownloadArtifactSchema = z.object({
-    name: z.string(),
-    url: z.string(),
-    hash: z.string().optional(),
-    hashType: z.enum(['sha256', 'md5', 'sha1']).optional(),
-    size: z.number().optional(),
-    downloadType: z.enum(['binary', 'path', 'installer']).default('binary'),
-});
-export type DownloadArtifact = z.infer<typeof DownloadArtifactSchema>;
-
-export const UnifiedBuildSchema = z.object({
-    core: ServerCoreSchema,
-    version: z.string(),
-    buildId: z.string(),
-    downloads: z.object({
-        application: DownloadArtifactSchema,
-    }),
-    timestamp: z.date().optional(),
-});
-export type UnifiedBuild = z.infer<typeof UnifiedBuildSchema>;
+export interface UnifiedBuild {
+    core: ServerCore;
+    version: string;
+    buildId: string;
+    downloads: {
+        application: DownloadArtifact;
+    };
+    timestamp?: Date;
+}
 
 export interface DownloadOptions {
     core: ServerCore;
@@ -40,36 +35,35 @@ export interface DownloadResult {
     downloadType: 'binary' | 'path' | 'installer';
 }
 
-// PaperMC Specific Schemas
-export const PaperBuildResponseSchema = z.object({
-    build: z.number(),
-    time: z.string().datetime(),
-    channel: z.enum(['default', 'experimental']),
-    promoted: z.boolean(),
-    changes: z.array(z.object({
-        commit: z.string(),
-        summary: z.string(),
-        message: z.string()
-    })).optional(),
-    downloads: z.object({
-        application: z.object({
-            name: z.string(),
-            sha256: z.string()
-        })
-    })
-});
-export type PaperBuildResponse = z.infer<typeof PaperBuildResponseSchema>;
+// PaperMC Specific Types
+export interface PaperBuildResponse {
+    build: number;
+    time: string;
+    channel: 'default' | 'experimental';
+    promoted: boolean;
+    changes?: {
+        commit: string;
+        summary: string;
+        message: string;
+    }[];
+    downloads: {
+        application: {
+            name: string;
+            sha256: string;
+        };
+    };
+}
 
-export const PaperVersionsResponseSchema = z.object({
-    project_id: z.string(),
-    project_name: z.string(),
-    version_groups: z.array(z.string()),
-    versions: z.array(z.string())
-});
+export interface PaperVersionsResponse {
+    project_id: string;
+    project_name: string;
+    version_groups: string[];
+    versions: string[];
+}
 
-export const PaperBuildsResponseSchema = z.object({
-    project_id: z.string(),
-    project_name: z.string(),
-    version: z.string(),
-    builds: z.array(PaperBuildResponseSchema)
-});
+export interface PaperBuildsResponse {
+    project_id: string;
+    project_name: string;
+    version: string;
+    builds: PaperBuildResponse[];
+}

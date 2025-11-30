@@ -1,21 +1,6 @@
 import type { CoreStrategy } from './CoreStrategy';
 import type { UnifiedBuild } from '../types';
-import { z } from 'zod';
 
-const FabricGameVersionsSchema = z.array(z.object({
-    version: z.string(),
-    stable: z.boolean()
-}));
-
-const FabricLoaderVersionsSchema = z.array(z.object({
-    version: z.string(),
-    stable: z.boolean()
-}));
-
-const FabricInstallerVersionsSchema = z.array(z.object({
-    version: z.string(),
-    stable: z.boolean()
-}));
 
 export class FabricStrategy implements CoreStrategy {
     readonly name = 'Fabric';
@@ -25,7 +10,7 @@ export class FabricStrategy implements CoreStrategy {
         const response = await fetch(`${this.baseUrl}/versions/game`);
         if (!response.ok) throw new Error('Failed to fetch fabric game versions');
         const data = await response.json();
-        const parsed = FabricGameVersionsSchema.parse(data);
+        const parsed = data as FabricGameVersion[];
         return parsed.map(v => v.version);
     }
 
@@ -34,7 +19,7 @@ export class FabricStrategy implements CoreStrategy {
         const loaderRes = await fetch(`${this.baseUrl}/versions/loader`);
         if (!loaderRes.ok) throw new Error('Failed to fetch fabric loader versions');
         const loaderData = await loaderRes.json();
-        const loaders = FabricLoaderVersionsSchema.parse(loaderData);
+        const loaders = loaderData as FabricLoaderVersion[];
 
         // Pick the latest stable loader
         const stableLoader = loaders.find(l => l.stable) || loaders[0];
@@ -44,7 +29,7 @@ export class FabricStrategy implements CoreStrategy {
         const installerRes = await fetch(`${this.baseUrl}/versions/installer`);
         if (!installerRes.ok) throw new Error('Failed to fetch fabric installer versions');
         const installerData = await installerRes.json();
-        const installers = FabricInstallerVersionsSchema.parse(installerData);
+        const installers = installerData as FabricInstallerVersion[];
 
         const stableInstaller = installers.find(i => i.stable) || installers[0];
         if (!stableInstaller) throw new Error('No fabric installer found');
@@ -76,8 +61,23 @@ export class FabricStrategy implements CoreStrategy {
     }
 
     async getDownloadUrl(project: string, version: string, buildId: string, fileName: string): Promise<string> {
-        // This method signature is a bit restrictive for Fabric since we need installer version too.
-        // But getBuilds handles it.
-        return '';
+        const buildInfo = await this.getBuilds(project, version);
+        if (!buildInfo) throw new Error(`No builds found for ${project} ${version}`);
+        return buildInfo[0]?.downloads.application.url!;
     }
+}
+
+interface FabricGameVersion {
+    version: string;
+    stable: boolean;
+}
+
+interface FabricLoaderVersion {
+    version: string;
+    stable: boolean;
+}
+
+interface FabricInstallerVersion {
+    version: string;
+    stable: boolean;
 }

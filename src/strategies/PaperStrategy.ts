@@ -1,5 +1,5 @@
 import type { CoreStrategy } from './CoreStrategy';
-import { type UnifiedBuild, PaperVersionsResponseSchema, PaperBuildsResponseSchema, type PaperBuildResponse } from '../types';
+import { type UnifiedBuild, type PaperVersionsResponse, type PaperBuildsResponse, type PaperBuildResponse } from '../types';
 
 export class PaperStrategy implements CoreStrategy {
     readonly name = 'PaperMC';
@@ -11,7 +11,7 @@ export class PaperStrategy implements CoreStrategy {
             throw new Error(`Failed to fetch versions for ${project}: ${response.statusText}`);
         }
         const data = await response.json();
-        const parsed = PaperVersionsResponseSchema.parse(data);
+        const parsed = data as PaperVersionsResponse;
         return parsed.versions;
     }
 
@@ -21,7 +21,7 @@ export class PaperStrategy implements CoreStrategy {
             throw new Error(`Failed to fetch builds for ${project} ${version}: ${response.statusText}`);
         }
         const data = await response.json();
-        const parsed = PaperBuildsResponseSchema.parse(data);
+        const parsed = data as PaperBuildsResponse;
 
         return parsed.builds.map(build => this.mapToUnifiedBuild(project, version, build));
     }

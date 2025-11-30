@@ -2,10 +2,11 @@ import type { CoreStrategy } from './strategies/CoreStrategy';
 import { PaperStrategy } from './strategies/PaperStrategy';
 import { PurpurStrategy } from './strategies/PurpurStrategy';
 import { MohistStrategy } from './strategies/MohistStrategy';
-import { MagmaStrategy } from './strategies/MagmaStrategy';
+//import { MagmaStrategy } from './strategies/MagmaStrategy';
 import { VanillaStrategy } from './strategies/VanillaStrategy';
 import { FabricStrategy } from './strategies/FabricStrategy';
 import { ForgeStrategy } from './strategies/ForgeStrategy';
+import { ArclightStrategy } from './strategies/ArclightStrategy';
 import type { ServerCore, UnifiedBuild, DownloadOptions, DownloadResult } from './types';
 import type { FileSystemAdapter } from './adapters/FileSystemAdapter';
 
@@ -23,7 +24,8 @@ export class MinecraftServerManager {
 
         this.registerStrategy('purpur', new PurpurStrategy());
         this.registerStrategy('mohist', new MohistStrategy());
-        this.registerStrategy('magma', new MagmaStrategy());
+        //this.registerStrategy('magma', new MagmaStrategy());
+        this.registerStrategy('arclight', new ArclightStrategy());
 
         this.registerStrategy('vanilla', new VanillaStrategy());
         this.registerStrategy('fabric', new FabricStrategy());
@@ -33,7 +35,12 @@ export class MinecraftServerManager {
     private registerStrategy(core: string, strategy: CoreStrategy) {
         this.strategies.set(core, strategy);
     }
-
+    getStrategies(): Map<string, CoreStrategy> {
+        return this.strategies;
+    }
+    getStrategyNames(): string[] {
+        return Array.from(this.strategies.keys());
+    }
     private getStrategy(core: string): CoreStrategy {
         const strategy = this.strategies.get(core);
         if (!strategy) {

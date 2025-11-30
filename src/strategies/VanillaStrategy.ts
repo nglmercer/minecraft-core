@@ -1,42 +1,18 @@
 import type { CoreStrategy } from './CoreStrategy';
 import type { UnifiedBuild } from '../types';
-import { z } from 'zod';
 
-const VanillaManifestSchema = z.object({
-    latest: z.object({
-        release: z.string(),
-        snapshot: z.string()
-    }),
-    versions: z.array(z.object({
-        id: z.string(),
-        type: z.string(),
-        url: z.string(),
-        time: z.string(),
-        releaseTime: z.string()
-    }))
-});
-
-const VanillaVersionDetailsSchema = z.object({
-    downloads: z.object({
-        server: z.object({
-            sha1: z.string(),
-            size: z.number(),
-            url: z.string()
-        })
-    })
-});
 
 export class VanillaStrategy implements CoreStrategy {
     readonly name = 'Vanilla';
     readonly baseUrl = 'https://piston-meta.mojang.com/mc/game/version_manifest_v2.json';
-    private manifestCache: z.infer<typeof VanillaManifestSchema> | null = null;
+    private manifestCache: VanillaManifest | null = null;
 
     private async getManifest() {
         if (this.manifestCache) return this.manifestCache;
         const response = await fetch(this.baseUrl);
         if (!response.ok) throw new Error('Failed to fetch vanilla manifest');
         const data = await response.json();
-        this.manifestCache = VanillaManifestSchema.parse(data);
+        this.manifestCache = data as VanillaManifest;
         return this.manifestCache;
     }
 
@@ -54,7 +30,7 @@ export class VanillaStrategy implements CoreStrategy {
         const detailsRes = await fetch(versionInfo.url);
         if (!detailsRes.ok) throw new Error(`Failed to fetch details for ${version}`);
         const detailsData = await detailsRes.json();
-        const details = VanillaVersionDetailsSchema.parse(detailsData);
+        const details = detailsData as VanillaVersionDetails;
 
         return [{
             core: 'vanilla',
@@ -85,4 +61,28 @@ export class VanillaStrategy implements CoreStrategy {
         const build = await this.getLatestBuild(project, version);
         return build.downloads.application.url;
     }
+}
+
+interface VanillaManifest {
+    latest: {
+        release: string;
+        snapshot: string;
+    };
+    versions: {
+        id: string;
+        type: string;
+        url: string;
+        time: string;
+        releaseTime: string;
+    }[];
+}
+
+interface VanillaVersionDetails {
+    downloads: {
+        server: {
+            sha1: string;
+            size: number;
+            url: string;
+        };
+    };
 }

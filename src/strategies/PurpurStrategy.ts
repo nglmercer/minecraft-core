@@ -1,30 +1,6 @@
 import type { CoreStrategy } from './CoreStrategy';
 import type { UnifiedBuild } from '../types';
-import { z } from 'zod';
 
-const PurpurVersionsResponseSchema = z.object({
-    project: z.string(),
-    versions: z.array(z.string())
-});
-
-const PurpurBuildsResponseSchema = z.object({
-    project: z.string(),
-    version: z.string(),
-    builds: z.object({
-        latest: z.string(),
-        all: z.array(z.string())
-    })
-});
-
-const PurpurBuildResponseSchema = z.object({
-    project: z.string(),
-    version: z.string(),
-    build: z.string(),
-    result: z.string(),
-    timestamp: z.number(),
-    md5: z.string().optional(),
-    commits: z.array(z.any()).optional() // We don't strictly need commit details
-});
 
 export class PurpurStrategy implements CoreStrategy {
     readonly name = 'PurpurMC';
@@ -37,7 +13,7 @@ export class PurpurStrategy implements CoreStrategy {
             throw new Error(`Failed to fetch versions for ${project}: ${response.statusText}`);
         }
         const data = await response.json();
-        const parsed = PurpurVersionsResponseSchema.parse(data);
+        const parsed = data as PurpurVersionsResponse;
         return parsed.versions;
     }
 
@@ -47,7 +23,7 @@ export class PurpurStrategy implements CoreStrategy {
             throw new Error(`Failed to fetch builds for ${project} ${version}: ${response.statusText}`);
         }
         const data = await response.json();
-        const parsed = PurpurBuildsResponseSchema.parse(data);
+        const parsed = data as PurpurBuildsResponse;
 
         // We only have IDs here, no hashes.
         return parsed.builds.all.map(buildId => ({
@@ -71,7 +47,7 @@ export class PurpurStrategy implements CoreStrategy {
             throw new Error(`Failed to fetch builds for ${project} ${version}`);
         }
         const data = await response.json();
-        const parsed = PurpurBuildsResponseSchema.parse(data);
+        const parsed = data as PurpurBuildsResponse;
         const latestBuildId = parsed.builds.latest;
 
         // Fetch details for latest build to get hash
@@ -87,7 +63,7 @@ export class PurpurStrategy implements CoreStrategy {
         if (!response.ok) throw new Error(`Failed to fetch build details for ${buildId}`);
 
         const data = await response.json();
-        const parsed = PurpurBuildResponseSchema.parse(data);
+        const parsed = data as PurpurBuildResponse;
 
         return {
             core: project as any,
@@ -105,4 +81,28 @@ export class PurpurStrategy implements CoreStrategy {
             }
         };
     }
+}
+
+interface PurpurVersionsResponse {
+    project: string;
+    versions: string[];
+}
+
+interface PurpurBuildsResponse {
+    project: string;
+    version: string;
+    builds: {
+        latest: string;
+        all: string[];
+    };
+}
+
+interface PurpurBuildResponse {
+    project: string;
+    version: string;
+    build: string;
+    result: string;
+    timestamp: number;
+    md5?: string;
+    commits?: any[];
 }

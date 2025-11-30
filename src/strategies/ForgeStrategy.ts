@@ -1,10 +1,6 @@
 import type { CoreStrategy } from './CoreStrategy';
 import type { UnifiedBuild } from '../types';
-import { z } from 'zod';
 
-const ForgePromotionsSchema = z.object({
-    promos: z.record(z.string(), z.string())
-});
 
 export class ForgeStrategy implements CoreStrategy {
     readonly name = 'Forge';
@@ -18,7 +14,7 @@ export class ForgeStrategy implements CoreStrategy {
         const response = await fetch(this.promotionsUrl);
         if (!response.ok) throw new Error('Failed to fetch forge promotions');
         const data = await response.json();
-        const parsed = ForgePromotionsSchema.parse(data);
+        const parsed = data as ForgePromotions;
 
         const versions = new Set<string>();
         Object.keys(parsed.promos).forEach(key => {
@@ -34,7 +30,7 @@ export class ForgeStrategy implements CoreStrategy {
         const response = await fetch(this.promotionsUrl);
         if (!response.ok) throw new Error('Failed to fetch forge promotions');
         const data = await response.json();
-        const parsed = ForgePromotionsSchema.parse(data);
+        const parsed = data as ForgePromotions;
 
         const latestKey = `${version}-latest`;
         const recommendedKey = `${version}-recommended`;
@@ -72,4 +68,8 @@ export class ForgeStrategy implements CoreStrategy {
     async getDownloadUrl(project: string, version: string, buildId: string, fileName: string): Promise<string> {
         return `https://maven.minecraftforge.net/net/minecraftforge/forge/${version}-${buildId}/forge-${version}-${buildId}-installer.jar`;
     }
+}
+
+interface ForgePromotions {
+    promos: Record<string, string>;
 }

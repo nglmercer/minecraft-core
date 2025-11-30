@@ -1,26 +1,6 @@
 import type { CoreStrategy } from './CoreStrategy';
 import type { UnifiedBuild } from '../types';
-import { z } from 'zod';
 
-const MohistVersionsResponseSchema = z.object({
-    versions: z.array(z.string())
-});
-
-const MohistBuildSchema = z.object({
-    number: z.number().optional(),
-    id: z.string().optional(), // Some builds might use string IDs
-    gitSha: z.string(),
-    fileMd5: z.string(),
-    fileSha256: z.string(),
-    url: z.string(),
-    createdAt: z.number()
-});
-
-const MohistBuildsResponseSchema = z.object({
-    projectName: z.string(),
-    projectVersion: z.string(),
-    builds: z.array(MohistBuildSchema)
-});
 
 export class MohistStrategy implements CoreStrategy {
     readonly name = 'MohistMC';
@@ -31,7 +11,7 @@ export class MohistStrategy implements CoreStrategy {
         if (!response.ok) throw new Error(`Failed to fetch versions for ${project}`);
 
         const data = await response.json();
-        const parsed = MohistVersionsResponseSchema.parse(data);
+        const parsed = data as MohistVersionsResponse;
         return parsed.versions;
     }
 
@@ -40,7 +20,7 @@ export class MohistStrategy implements CoreStrategy {
         if (!response.ok) throw new Error(`Failed to fetch builds for ${project} ${version}`);
 
         const data = await response.json();
-        const parsed = MohistBuildsResponseSchema.parse(data);
+        const parsed = data as MohistBuildsResponse;
 
         return parsed.builds.map(build => {
             const buildId = build.number ? build.number.toString() : (build.id || 'unknown');
@@ -75,4 +55,24 @@ export class MohistStrategy implements CoreStrategy {
         // https://mohistmc.com/api/v2/projects/mohist/{version}/builds/{number}/download
         return `${this.baseUrl}/projects/${project}/${version}/builds/${buildId}/download`;
     }
+}
+
+interface MohistVersionsResponse {
+    versions: string[];
+}
+
+interface MohistBuild {
+    number?: number;
+    id?: string;
+    gitSha: string;
+    fileMd5: string;
+    fileSha256: string;
+    url: string;
+    createdAt: number;
+}
+
+interface MohistBuildsResponse {
+    projectName: string;
+    projectVersion: string;
+    builds: MohistBuild[];
 }

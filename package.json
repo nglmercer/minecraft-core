@@ -1,6 +1,19 @@
 {
   "name": "minecraft-core",
-  "version": "0.0.1",
+  "version": "1.0.0",
+  "description": "Core library for Minecraft-related utilities",
+  "keywords": [
+    "minecraft",
+    "core",
+    "utilities",
+    "typescript"
+  ],
+  "author": "nglmercer",
+  "license": "MIT",
+  "homepage": "https://github.com/nglmercer/minecraft-core#readme",
+  "bugs": {
+    "url": "https://github.com/nglmercer/minecraft-core/issues"
+  },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -15,13 +28,17 @@
     "dist"
   ],
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nglmercer/minecraft-core.git"
+  },
   "scripts": {
     "test": "bun test",
     "manual": "bun run tests/manual.ts",
     "typecheck": "bunx tsc --noEmit",
     "build": "tsup src/index.ts --format cjs,esm --dts --clean",
     "prepublishOnly": "bun run build",
-    "publish": "bun publish"
+    "publish": "npm publish"
   },
   "devDependencies": {
     "@types/bun": "latest",
@@ -30,7 +47,5 @@
   "peerDependencies": {
     "typescript": "^5"
   },
-  "dependencies": {
-    "zod": "^4.1.13"
-  }
+  "dependencies": {}
 }
