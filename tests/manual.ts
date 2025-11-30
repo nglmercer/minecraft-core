@@ -1,43 +1,43 @@
-import { MinecraftServerManager } from '../src';
-import { ServerCore } from '../src/types';
+import { MinecraftServerManager } from '../src/MinecraftServerManager';
+import type { ServerCore } from '../src/types';
+
+const manager = new MinecraftServerManager();
 
 async function testProvider(core: ServerCore, versionOverride?: string) {
-    console.log(`\n=== Testing ${core} ===`);
-    const manager = new MinecraftServerManager();
-
+    console.log(`\n--- Testing ${core} ---`);
     try {
-        console.log(`Fetching versions for ${core}...`);
         const versions = await manager.getVersions(core);
-        console.log(`Found ${versions.length} versions. Last 5: ${versions.slice(-5).join(', ')}`);
+        console.log(`Found ${versions.length} versions`);
 
-        // Vanilla versions are sorted new to old usually, so [0] is latest. 
-        // Others are old to new.
         let version = versionOverride;
         if (!version) {
             if (core === 'vanilla') {
+                // Vanilla versions are usually sorted new -> old
                 version = versions[0];
             } else {
                 version = versions[versions.length - 1];
             }
         }
 
-        console.log(`Fetching latest build for ${core} ${version}...`);
+        if (!version) {
+            console.error('No version found to test');
+            return;
+        }
 
+        console.log(`Testing version: ${version}`);
         const latestBuild = await manager.getLatestBuild(core, version);
-        console.log(`Latest build: ${latestBuild.buildId} (${latestBuild.timestamp})`);
-        console.log(`URL: ${latestBuild.downloads.application.url}`);
-        console.log(`Hash: ${latestBuild.downloads.application.hash} (${latestBuild.downloads.application.hashType})`);
+        console.log(`Latest build: ${latestBuild.buildId}`);
 
-        console.log('Downloading server...');
         const result = await manager.downloadServer({
-            core,
+            core: core,
             version: version,
-            outputDir: './downloads',
+            outputDir: './test_downloads_manual'
         });
+        console.log(`Downloaded to: ${result.path}`);
+        console.log(`Type: ${result.downloadType}`);
 
-        console.log('Download complete:', result.filename);
     } catch (e) {
-        console.error(`FAILED ${core}:`, e);
+        console.error(`Error testing ${core}:`, e);
     }
 }
 
@@ -49,8 +49,6 @@ async function main() {
     await testProvider('vanilla');
     await testProvider('fabric', '1.20.1');
     await testProvider('forge', '1.20.1');
-
-    // await testProvider('magma'); // Still not implemented
 }
 
-main().catch(console.error);
+main();

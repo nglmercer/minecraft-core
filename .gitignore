@@ -34,4 +34,8 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .DS_Store
 downloads/*
 test_downloads/*
+test_downloads_manual/*
 debug/*
+
+# bun.lock
+bun.lock

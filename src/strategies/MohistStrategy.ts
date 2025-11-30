@@ -2,7 +2,9 @@ import type { CoreStrategy } from './CoreStrategy';
 import type { UnifiedBuild } from '../types';
 import { z } from 'zod';
 
-const MohistVersionsResponseSchema = z.array(z.string());
+const MohistVersionsResponseSchema = z.object({
+    versions: z.array(z.string())
+});
 
 const MohistBuildSchema = z.object({
     number: z.number().optional(),
@@ -29,10 +31,8 @@ export class MohistStrategy implements CoreStrategy {
         if (!response.ok) throw new Error(`Failed to fetch versions for ${project}`);
 
         const data = await response.json();
-        // The API returns a list of versions directly? Or object?
-        // Based on previous inspection: ["1.7.10", "1.12.2", ...]
         const parsed = MohistVersionsResponseSchema.parse(data);
-        return parsed;
+        return parsed.versions;
     }
 
     async getBuilds(project: string, version: string): Promise<UnifiedBuild[]> {
