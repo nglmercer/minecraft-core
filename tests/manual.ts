@@ -1,7 +1,8 @@
 import { MinecraftServerManager } from '../src/MinecraftServerManager';
+import { NodeAdapter } from '../src/adapters/NodeAdapter';
 import type { ServerCore } from '../src/types';
 
-const manager = new MinecraftServerManager();
+const manager = new MinecraftServerManager(new NodeAdapter());
 
 async function testProvider(core: ServerCore, versionOverride?: string) {
     console.log(`\n--- Testing ${core} ---`);

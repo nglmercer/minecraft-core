@@ -7,11 +7,15 @@ import { VanillaStrategy } from './strategies/VanillaStrategy';
 import { FabricStrategy } from './strategies/FabricStrategy';
 import { ForgeStrategy } from './strategies/ForgeStrategy';
 import type { ServerCore, UnifiedBuild, DownloadOptions, DownloadResult } from './types';
+import type { FileSystemAdapter } from './adapters/FileSystemAdapter';
 
 export class MinecraftServerManager {
     private strategies: Map<string, CoreStrategy> = new Map();
+    private fs: FileSystemAdapter;
 
-    constructor() {
+    constructor(fsAdapter: FileSystemAdapter) {
+        this.fs = fsAdapter;
+
         this.registerStrategy('paper', new PaperStrategy());
         this.registerStrategy('velocity', new PaperStrategy());
         this.registerStrategy('folia', new PaperStrategy());
@@ -67,10 +71,10 @@ export class MinecraftServerManager {
 
         const artifact = build.downloads.application;
         const filename = options.filename || artifact.name;
-        const filePath = (await import('node:path')).join(outputDir, filename);
+        const filePath = this.fs.join(outputDir, filename);
 
         // Ensure output dir exists
-        await (await import('node:fs/promises')).mkdir(outputDir, { recursive: true });
+        await this.fs.mkdir(outputDir);
 
         console.log(`Downloading ${artifact.url} to ${filePath}...`);
 
@@ -79,24 +83,15 @@ export class MinecraftServerManager {
         if (!response.body) throw new Error('No response body');
 
         // Write to file
-        const fileStream = (await import('node:fs')).createWriteStream(filePath);
-        const { pipeline } = await import('node:stream/promises');
-        // @ts-ignore - Bun/Node stream compatibility
-        await pipeline(response.body, fileStream);
+        await this.fs.writeStream(filePath, response.body);
 
-        // Verify Hash (only if binary, or if we want to verify the file containing the path?)
-        // Usually hash is for the binary. If we got a path, the hash probably matches the binary, not the path string.
-        // So we skip hash verification for 'path' type unless we download the binary.
+        // Verify Hash
         if (artifact.downloadType === 'binary' && artifact.hash) {
             console.log(`Verifying hash (${artifact.hashType})...`);
-            const fileBuffer = await (await import('node:fs/promises')).readFile(filePath);
-            const crypto = await import('node:crypto');
-            const hashSum = crypto.createHash(artifact.hashType || 'sha256');
-            hashSum.update(fileBuffer);
-            const hex = hashSum.digest('hex');
+            const hex = await this.fs.calculateHash(filePath, artifact.hashType || 'sha256');
 
             if (hex !== artifact.hash) {
-                await (await import('node:fs/promises')).unlink(filePath); // Delete corrupt file
+                await this.fs.deleteFile(filePath); // Delete corrupt file
                 throw new Error(`Hash mismatch! Expected ${artifact.hash}, got ${hex}`);
             }
             console.log('Hash verified!');
@@ -106,12 +101,12 @@ export class MinecraftServerManager {
             console.warn('No hash provided for verification.');
         }
 
-        const stats = await (await import('node:fs/promises')).stat(filePath);
+        const size = await this.fs.getFileSize(filePath);
 
         return {
             path: filePath,
             filename: filename,
-            size: stats.size,
+            size: size,
             hash: artifact.hash || '',
             downloadType: artifact.downloadType
         };

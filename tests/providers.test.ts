@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeAll } from 'bun:test';
 import { MinecraftServerManager } from '@/MinecraftServerManager';
+import { NodeAdapter } from '@/adapters/NodeAdapter';
 import { existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -9,7 +10,7 @@ describe('MinecraftServerManager', () => {
     let manager: MinecraftServerManager;
 
     beforeAll(() => {
-        manager = new MinecraftServerManager();
+        manager = new MinecraftServerManager(new NodeAdapter());
         if (existsSync(OUTPUT_DIR)) {
             rmSync(OUTPUT_DIR, { recursive: true, force: true });
         }

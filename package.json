@@ -1,5 +1,5 @@
 {
-  "name": "minecraft",
+  "name": "minecraft-core",
   "module": "index.ts",
   "type": "module",
   "private": true,
