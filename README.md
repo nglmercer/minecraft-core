@@ -33,6 +33,7 @@ pnpm add minecraft-core
 | **Velocity** | `velocity` | ✅ Ready | The modern, high-performance Minecraft proxy. |
 | **Folia** | `folia` | ✅ Ready | Regionized multithreading dedicated server. |
 | **Waterfall**| `waterfall`| ✅ Ready | The BungeeCord fork by PaperMC. |
+| **Arclight** | `arclight` | ✅ Ready | Hybrid server (Forge + Spigot/Paper). |
 | **Magma** | `magma` | 🚧 Planned | Hybrid server (Forge + Spigot/Paper). |
 
 ## 📖 Usage
@@ -76,7 +77,7 @@ try {
     console.error('Download failed:', error);
 }
 ```
-
+![download avaible](image.png)
 ### 4. Advanced: Get Build Details
 
 If you need specific build information before downloading.
