@@ -1,6 +1,6 @@
 {
   "name": "minecraft-core",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Core library for Minecraft-related utilities",
   "keywords": [
     "minecraft",
