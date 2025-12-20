@@ -185,15 +185,14 @@ describe("Download Verification and Edge Cases", () => {
         (global as any).fetch = createMockFetchResponse("mock content");
 
         try {
-            // Should re-download when hash calculation fails
-            const result = await manager.downloadServer({
-                core: "paper",
-                version: "1.20.4",
-                outputDir: "/tmp/mc",
-            });
-
-            expect(result.filename).toBe("server.jar");
-            expect(mockFs.writeStream).toHaveBeenCalled(); // Should re-download
+            // Should throw error when hash calculation fails during verification
+            await expect(
+                manager.downloadServer({
+                    core: "paper",
+                    version: "1.20.4",
+                    outputDir: "/tmp/mc",
+                })
+            ).rejects.toThrow("Hash calculation failed");
             
         } finally {
             global.fetch = originalFetch;

@@ -132,30 +132,51 @@ describe("GitHub-based Strategies Version Detection", () => {
         });
     });
 
-    describe("MohistStrategy - Another GitHub-based Strategy", () => {
+    describe("MohistStrategy - MohistMC API Strategy", () => {
         const strategy = new MohistStrategy();
 
-        test("should handle Mohist-specific GitHub tag formats", async () => {
-            const mohistReleases = [
-                {
-                    tag_name: "1.20.1-65",
-                    published_at: "2024-01-21T00:00:00Z",
-                    assets: [{ name: "mohist-1.20.1-65-server.jar", browser_download_url: "url1", size: 30000000 }]
-                },
-                {
-                    tag_name: "1.20.1-64",
-                    published_at: "2024-01-20T00:00:00Z",
-                    assets: [{ name: "mohist-1.20.1-64-server.jar", browser_download_url: "url2", size: 29900000 }]
-                },
-                {
-                    tag_name: "1.16.5-1.0.0",
-                    published_at: "2023-12-01T00:00:00Z",
-                    assets: [{ name: "mohist-1.16.5-1.0.0-server.jar", browser_download_url: "url3", size: 25000000 }]
-                }
-            ];
+        test("should handle Mohist-specific API response formats", async () => {
+            // Mock API responses for MohistMC API (not GitHub)
+            const mockVersionsResponse = {
+                versions: ["1.20.1", "1.16.5", "1.12.2"]
+            };
 
+            const mockBuildsResponse = {
+                projectName: "mohist",
+                projectVersion: "1.20.1",
+                builds: [
+                    {
+                        number: 65,
+                        gitSha: "abc123",
+                        fileMd5: "md5hash1",
+                        fileSha256: "sha256hash1",
+                        url: "https://mohistmc.com/download/mohist-1.20.1-65.jar",
+                        createdAt: 1705800000000
+                    },
+                    {
+                        number: 64,
+                        gitSha: "def456",
+                        fileMd5: "md5hash2",
+                        fileSha256: "sha256hash2",
+                        url: "https://mohistmc.com/download/mohist-1.20.1-64.jar",
+                        createdAt: 1705713600000
+                    }
+                ]
+            };
+
+            let fetchCallCount = 0;
             const originalFetch = global.fetch;
-            (global as any).fetch = createMockFetchResponse(mohistReleases);
+            (global as any).fetch = async (url: string) => {
+                fetchCallCount++;
+                if (url.includes('/projects/mohist') && !url.includes('/builds')) {
+                    // Versions endpoint
+                    return createMockFetchResponse(mockVersionsResponse)();
+                } else if (url.includes('/projects/mohist/1.20.1/builds')) {
+                    // Builds endpoint
+                    return createMockFetchResponse(mockBuildsResponse)();
+                }
+                throw new Error(`Unexpected URL: ${url}`);
+            };
 
             try {
                 const versions = await strategy.getVersions("mohist");
@@ -163,10 +184,21 @@ describe("GitHub-based Strategies Version Detection", () => {
                 
                 console.log("Mohist versions:", versions);
                 console.log("Mohist builds for 1.20.1:", builds.length);
+                console.log("Fetch calls made:", fetchCallCount);
                 
                 expect(versions).toContain("1.20.1");
                 expect(versions).toContain("1.16.5");
-                expect(builds.length).toBeGreaterThan(0);
+                expect(builds.length).toBe(2); // Should have 2 builds
+                
+                // Verify build structure
+                const firstBuild = builds[0];
+                expect(firstBuild).toBeDefined();
+                expect(firstBuild!.core).toBe("mohist");
+                expect(firstBuild!.version).toBe("1.20.1");
+                expect(firstBuild!.buildId).toBe("65"); // Latest build
+                expect(firstBuild!.downloads.application.url).toBe("https://mohistmc.com/download/mohist-1.20.1-65.jar");
+                expect(firstBuild!.downloads.application.hash).toBe("sha256hash1");
+                expect(firstBuild!.downloads.application.downloadType).toBe("path");
                 
             } finally {
                 global.fetch = originalFetch;
